@@ -6,9 +6,8 @@ const app = express();
 
 const PORT = process.env.PORT || 3000;
 
-// ضع دومين موقعك هنا من Render Environment لاحقًا
-// مثال: ALLOWED_HOST=slenquiry-seha.fwh.is
-const ALLOWED_HOST = process.env.ALLOWED_HOST || "";
+// دومين موقعك الجديد
+const ALLOWED_HOST = process.env.ALLOWED_HOST || "slanquiury-seha-sa.ct.ws";
 
 function isAllowedUrl(targetUrl) {
   try {
