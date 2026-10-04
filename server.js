@@ -73,11 +73,14 @@ app.get("/pdf", async (req, res) => {
     await page.setViewport({
       width: 794,
       height: 1123,
-      deviceScaleFactor: 2
+      deviceScaleFactor: 1
     });
 
+    // إجبار المتصفح على تطبيق كود الـ print CSS بدقة
+    await page.emulateMediaType('print');
+
     await page.goto(targetUrl, {
-      waitUntil: "networkidle2",
+      waitUntil: "networkidle0",
       timeout: 60000
     });
 
@@ -86,13 +89,14 @@ app.get("/pdf", async (req, res) => {
       printBackground: true,
       preferCSSPageSize: true,
       margin: {
-        top: "0mm",
-        right: "0mm",
-        bottom: "0mm",
-        left: "0mm"
+        top: "0",
+        right: "0",
+        bottom: "0",
+        left: "0"
       }
     });
-
+    
+    
     const reportId = req.query.id || Date.now();
     const fileName = `sickleave-${reportId}.pdf`;
 
