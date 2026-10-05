@@ -6,8 +6,9 @@ const app = express();
 
 const PORT = process.env.PORT || 3000;
 
-// نطاق موقعك الجديد
-const ALLOWED_HOST = process.env.ALLOWED_HOST || "slanquiury-seha-sa.ct.ws";
+// ضع دومين موقعك هنا من Render Environment لاحقًا
+// مثال: ALLOWED_HOST=slanquiury-seha-sa.ct.ws
+const ALLOWED_HOST = process.env.ALLOWED_HOST || "";
 
 function isAllowedUrl(targetUrl) {
   try {
@@ -15,6 +16,7 @@ function isAllowedUrl(targetUrl) {
 
     if (!["http:", "https:"].includes(u.protocol)) return false;
 
+    // إذا ما حددت ALLOWED_HOST يسمح مؤقتًا، لكن الأفضل تضيفه في Render
     if (!ALLOWED_HOST) return true;
 
     return u.hostname === ALLOWED_HOST || u.hostname.endsWith("." + ALLOWED_HOST);
@@ -36,15 +38,19 @@ async function getBrowser() {
 app.get("/", (req, res) => {
   res.send(`
     <h2>Seha PDF Service is running ✅</h2>
-    <p>Use: <code>/pdf?url=https://YOUR-SITE/print_template_fetch.php?id=1</code></p>
+    <p>Use: <code>/pdf?url=https://YOUR-SITE/print_template.php?id=1</code></p>
   `);
 });
 
 app.get("/pdf", async (req, res) => {
+  const secret = req.query.key;
   const targetUrl = req.query.url;
 
+  if (secret !== process.env.PDF_SECRET_KEY) {
+    return res.status(403).send("Forbidden");
+  }
   if (!targetUrl) {
-    return res.status(400).send("Missing url parameter.");
+    return res.status(400).send("Missing url. Example: /pdf?url=https://site.com/print_template.php?id=1");
   }
 
   if (!isAllowedUrl(targetUrl)) {
@@ -70,10 +76,7 @@ app.get("/pdf", async (req, res) => {
 
     // انتظار تحميل الخطوط بالكامل
     await page.evaluateHandle("document.fonts.ready");
-
-    // مهلة الانتظار الحاسمة لرسم الصور والخلفيات
     await new Promise(resolve => setTimeout(resolve, 800));
-
     const pdfBuffer = await page.pdf({
       format: "A4",
       printBackground: true,
@@ -87,8 +90,7 @@ app.get("/pdf", async (req, res) => {
     });
 
     const reportId = req.query.id || Date.now();
-    const fileName = `sickleave-${reportId}.pdf`;
-
+const fileName = `sickleave-${reportId}.pdf`;
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
     res.send(pdfBuffer);
